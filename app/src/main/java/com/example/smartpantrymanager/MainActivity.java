@@ -10,6 +10,7 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     MyDatabaseHelper dbHelper;
     ArrayList<String> displayList = new ArrayList<>();
     ArrayList<Integer> idList = new ArrayList<>();
+    Button recipeBtn;
 
 
     @Override
@@ -50,12 +52,22 @@ public class MainActivity extends AppCompatActivity {
         floatingBtn = findViewById(R.id.floatingActionButton);
         listView = findViewById(R.id.listView);
         dbHelper = new MyDatabaseHelper(this);
+        recipeBtn = findViewById(R.id.recipeBtn);
+
 
         //set OnClickListener to handle activity navigation
         floatingBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(MainActivity.this,AddIngredient.class);
+                startActivity(intent);
+            }
+        });
+
+        recipeBtn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent(MainActivity.this, Recipe.class);
                 startActivity(intent);
             }
         });
