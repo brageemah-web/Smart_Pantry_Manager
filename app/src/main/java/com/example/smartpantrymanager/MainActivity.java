@@ -1,13 +1,16 @@
 package com.example.smartpantrymanager;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -61,25 +64,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final int selectedDbId = idList.get(position);
+                String[] options = {"Edit Quantity", "Delete Item"};
 
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Delete Item")
-                        .setMessage("Are you sure you want to delete this ingredient?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        .setTitle("Manage Item")
+                        .setItems(options, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                                db.delete(
-                                        MyDatabaseHelper.PANTRYITEM_TABLE,
-                                        MyDatabaseHelper.PANTRYITEM_ID + " = ?",
-                                        new String[]{String.valueOf(selectedDbId)}
-                                );
-                                db.close();
-                                Toast.makeText(MainActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
-                                loadPantryData();
+                                if (which == 0) {
+                                    // User clicked "Edit Quantity"
+                                    showEditQuantityDialog(selectedDbId);
+                                } else if (which == 1) {
+                                    // User clicked "Delete Item"
+                                    showDeleteConfirmDialog(selectedDbId);
+                                }
                             }
                         })
-                        .setNegativeButton("No", null)
+                        .setNegativeButton("Cancel", null)
                         .show();
             }
         });
@@ -101,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.query(MyDatabaseHelper.PANTRYITEM_TABLE,
-                new String[]{MyDatabaseHelper.PANTRYITEM_NAME, MyDatabaseHelper.PANTRYITEM_QUANTITY},
+                new String[]{MyDatabaseHelper.PANTRYITEM_ID,MyDatabaseHelper.PANTRYITEM_NAME, MyDatabaseHelper.PANTRYITEM_QUANTITY},
                 null, null, null, null, null);
 
         if (cursor != null) {
@@ -121,5 +122,64 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, displayList);
 
         listView.setAdapter(adapter);
+    }
+
+    private void showEditQuantityDialog(final int dbId) {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Enter new quantity");
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Quantity")
+                .setView(input)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String qtyInput = input.getText().toString().trim();
+                        if (!qtyInput.isEmpty()) {
+                            SQLiteDatabase db = dbHelper.getWritableDatabase();
+                            ContentValues values = new ContentValues();
+                            values.put(MyDatabaseHelper.PANTRYITEM_QUANTITY, Integer.parseInt(qtyInput));
+
+                            db.update(
+                                    MyDatabaseHelper.PANTRYITEM_TABLE,
+                                    values,
+                                    MyDatabaseHelper.PANTRYITEM_ID + " = ?",
+                                    new String[]{String.valueOf(dbId)}
+                            );
+                            db.close();
+
+                            Toast.makeText(MainActivity.this, "Quantity updated", Toast.LENGTH_SHORT).show();
+                            loadPantryData();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Quantity cannot be empty", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+
+    private void showDeleteConfirmDialog(final int dbId) {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Delete Item")
+                .setMessage("Are you sure you want to delete this ingredient?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SQLiteDatabase db = dbHelper.getWritableDatabase();
+                        db.delete(
+                                MyDatabaseHelper.PANTRYITEM_TABLE,
+                                MyDatabaseHelper.PANTRYITEM_ID + " = ?",
+                                new String[]{String.valueOf(dbId)}
+                        );
+                        db.close();
+                        Toast.makeText(MainActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
+                        loadPantryData(); // Refresh layout view instantly
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 }
