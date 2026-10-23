@@ -1,20 +1,36 @@
 package com.example.smartpantrymanager;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     //initialize floating action button
     FloatingActionButton floatingBtn;
+    ListView listView;
+    MyDatabaseHelper dbHelper;
+    ArrayList<String> displayList = new ArrayList<>();
+    ArrayList<Integer> idList = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,8 +43,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // bind xml to java variable
+
         floatingBtn = findViewById(R.id.floatingActionButton);
+        listView = findViewById(R.id.listView);
+        dbHelper = new MyDatabaseHelper(this);
 
         //set OnClickListener to handle activity navigation
         floatingBtn.setOnClickListener(new View.OnClickListener(){
@@ -38,5 +56,70 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final int selectedDbId = idList.get(position);
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Delete Item")
+                        .setMessage("Are you sure you want to delete this ingredient?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                                db.delete(
+                                        MyDatabaseHelper.PANTRYITEM_TABLE,
+                                        MyDatabaseHelper.PANTRYITEM_ID + " = ?",
+                                        new String[]{String.valueOf(selectedDbId)}
+                                );
+                                db.close();
+                                Toast.makeText(MainActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
+                                loadPantryData();
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+        });
+    }
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadPantryData();
+    }
+
+    private void loadPantryData() {
+        displayList.clear();
+        idList.clear();
+
+        ArrayList<String> displayList = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.query(MyDatabaseHelper.PANTRYITEM_TABLE,
+                new String[]{MyDatabaseHelper.PANTRYITEM_NAME, MyDatabaseHelper.PANTRYITEM_QUANTITY},
+                null, null, null, null, null);
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int dbId = cursor.getInt(cursor.getColumnIndexOrThrow(MyDatabaseHelper.PANTRYITEM_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(MyDatabaseHelper.PANTRYITEM_NAME));
+                int qty = cursor.getInt(cursor.getColumnIndexOrThrow(MyDatabaseHelper.PANTRYITEM_QUANTITY));
+
+                idList.add(dbId);
+                displayList.add(name + "  (Qty: " + qty + ")");
+            }
+            cursor.close();
+        }
+        db.close();
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, displayList);
+
+        listView.setAdapter(adapter);
     }
 }
