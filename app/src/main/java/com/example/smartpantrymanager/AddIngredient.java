@@ -72,13 +72,25 @@ public class AddIngredient extends AppCompatActivity {
                 return;
             }
 
-            String finalName = nameInput + " (" + unitInput + ")";
+            double quantity;
+            try {
+                quantity = Double.parseDouble(quantityInput);
+            } catch (NumberFormatException e) {
+                Toast.makeText(AddIngredient.this, "Enter a valid number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (quantity <= 0) {
+                Toast.makeText(AddIngredient.this, "Quantity must be greater than 0", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
 
-            values.put(MyDatabaseHelper.PANTRYITEM_NAME, finalName);
-            values.put(MyDatabaseHelper.PANTRYITEM_QUANTITY, Integer.parseInt(quantityInput));
+            values.put(MyDatabaseHelper.PANTRYITEM_NAME, nameInput);
+            values.put(MyDatabaseHelper.PANTRYITEM_NORMALIZED, TextHelper.normalize(nameInput));
+            values.put(MyDatabaseHelper.PANTRYITEM_QUANTITY, quantity);
+            values.put(MyDatabaseHelper.PANTRYITEM_UNIT, unitInput);
             values.put(MyDatabaseHelper.PANTRYITEM_EXPIRY_DATE, expiryDate.getText().toString().trim());
 
             long result = db.insert(MyDatabaseHelper.PANTRYITEM_TABLE, null, values);
