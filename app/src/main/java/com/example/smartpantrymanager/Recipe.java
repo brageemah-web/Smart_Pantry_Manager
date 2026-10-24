@@ -1,5 +1,6 @@
 package com.example.smartpantrymanager;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -41,6 +42,12 @@ public class Recipe extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, recipeNames);
         recipeListView.setAdapter(adapter);
         recipeListView.setEmptyView(emptyView);   // shown when the list is empty
+
+        recipeListView.setOnItemClickListener((parent, view, position, id) -> {
+            Intent intent = new Intent(Recipe.this, RecipeDetail.class);
+            intent.putExtra("recipe_id", recipeIds.get(position));
+            startActivity(intent);
+        });
     }
 
     @Override

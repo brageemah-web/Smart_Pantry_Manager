@@ -23,6 +23,7 @@
         </activity>
         <activity android:name = ".AddIngredient"></activity>
         <activity android:name = ".Recipe"></activity>
+        <activity android:name=".RecipeDetail" />
     </application>
 
 </manifest>
