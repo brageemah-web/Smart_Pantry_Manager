@@ -122,3 +122,9 @@ If you change a table, raise `VERSION` in `MyDatabaseHelper`. `onUpgrade` drops 
 
 This app concept and its implementation are my own original work, completed for Mobile App Development 700.
 
+---
+
+### Video Demo
+https://drive.google.com/drive/folders/1Lgivg7TerutlcV5qs6YRSpyHa5DlD00b?usp=drive_link
+
+---
